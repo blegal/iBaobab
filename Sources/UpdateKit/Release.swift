@@ -59,7 +59,7 @@ public enum UpdateError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .unavailable:
-            return "Les mises à jour ne sont pas encore publiées. Le dépôt sera public à partir de la version 1.0 ; en attendant, téléchargez les nouvelles versions à la main."
+            return "Aucune version publiée n’a été trouvée : le dépôt est privé ou n’a pas encore de release. En attendant, téléchargez les nouvelles versions à la main."
         case .http(let code): return "Le serveur des mises à jour a répondu par une erreur (\(code))."
         case .missingAsset: return "La dernière version ne contient pas d’image disque pour cette application."
         case .missingSignature: return "La dernière version n’est pas signée : installez-la à la main depuis la page de la version."
