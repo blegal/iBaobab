@@ -411,16 +411,7 @@ final class DiskChartView: NSView {
         var kept = Array(kids.prefix(limit).filter { Double($0.size) / total >= minimum })
         if kept.count < kids.count {
             let rest = kids[kept.count...]
-            let group = DiskNode(name: "\(rest.count) autres éléments")
-            group.isAggregate = true
-            var sizes = [Int64](repeating: 0, count: DiskCategory.allCases.count)
-            for item in rest {
-                group.size += item.size
-                group.count += item.count
-                group.modified = max(group.modified, item.modified)
-                for category in DiskCategory.allCases { sizes[category.rawValue] += item.size(of: category) }
-            }
-            group.categorySizes = sizes
+            let group = DiskNode.group(name: "\(rest.count) autres éléments", of: rest)
             group.category = .other
             group.parent = node
             kept.append(group)
@@ -648,19 +639,25 @@ final class DiskChartView: NSView {
         return (fraction * 100).formatted(.number.precision(.fractionLength(fraction >= 0.1 ? 0 : 1))) + " %"
     }
 
-    private func drawText(_ text: String, in rect: CGRect, font: NSFont, color: NSColor, shadow: Bool = false, alignment: NSTextAlignment = .left) {
-        guard rect.width > 8, rect.height > 4 else { return }
+    /// Styles de texte partagés par tous les dessins (créés une fois).
+    private static let paragraphs: [NSTextAlignment: NSParagraphStyle] = Dictionary(uniqueKeysWithValues: [NSTextAlignment.left, .center, .right].map { alignment in
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineBreakMode = .byTruncatingTail
         paragraph.alignment = alignment
-        var attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: color, .paragraphStyle: paragraph]
-        if shadow {
-            let textShadow = NSShadow()
-            textShadow.shadowColor = NSColor.black.withAlphaComponent(0.5)
-            textShadow.shadowBlurRadius = 2
-            textShadow.shadowOffset = .zero
-            attributes[.shadow] = textShadow
-        }
+        return (alignment, paragraph)
+    })
+    private static let textShadow: NSShadow = {
+        let shadow = NSShadow()
+        shadow.shadowColor = NSColor.black.withAlphaComponent(0.5)
+        shadow.shadowBlurRadius = 2
+        shadow.shadowOffset = .zero
+        return shadow
+    }()
+
+    private func drawText(_ text: String, in rect: CGRect, font: NSFont, color: NSColor, shadow: Bool = false, alignment: NSTextAlignment = .left) {
+        guard rect.width > 8, rect.height > 4 else { return }
+        var attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: color, .paragraphStyle: Self.paragraphs[alignment] ?? Self.paragraphs[.left]!]
+        if shadow { attributes[.shadow] = Self.textShadow }
         (text as NSString).draw(with: rect, options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine], attributes: attributes)
     }
 }
