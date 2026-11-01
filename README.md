@@ -62,3 +62,7 @@ L'application vérifie les nouvelles versions au lancement et à la demande, san
 4. L'image est montée, la nouvelle application est copiée à côté de l'ancienne, puis un petit script détaché échange les paquets et relance l'application.
 
 **Clé de signature.** `swift Tools/make-update-key.swift` produit la paire de clés : la clé privée va dans le secret `UPDATE_SIGNING_KEY` du dépôt, la clé publique dans `Resources/Info.plist`. Le workflow signe chaque DMG avec `Tools/sign-update.swift` et publie la signature avec la release. Si la clé privée est perdue, les copies déjà installées devront être mises à jour à la main une fois.
+
+## Développement
+
+iBaobab a été développée avec l'aide de [Claude Code](https://claude.com/claude-code), l'assistant de programmation d'Anthropic.
