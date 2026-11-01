@@ -4,12 +4,13 @@ import UpdateKit
 import BaobabL10n
 
 /// Une fenêtre par onglet (onglets natifs) : l'accueil, puis une analyse par onglet.
-final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuItemValidation {
     private var windows: [NSWindow] = []
     private var pendingURLs: [URL] = []
     private var launched = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        MainActor.assumeIsolated { Animations.install() }
         NSApp.mainMenu = MainMenu.build()
         NSWindow.allowsAutomaticWindowTabbing = true
         let home = openHome(beside: nil)
@@ -120,6 +121,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             self?.openAnalysis(url, beside: parent)
         }
         if let parent { panel.beginSheetModal(for: parent, completionHandler: handler) } else { handler(panel.runModal()) }
+    }
+
+    @objc func setAnimationLevel(_ sender: NSMenuItem) {
+        Animations.level = AnimationLevel(rawValue: sender.tag) ?? .light
+    }
+
+    @objc func showSettings(_ sender: Any?) {
+        MainActor.assumeIsolated { AnimationSettingsWindowController.shared.showWindow(nil) }
+    }
+
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(setAnimationLevel(_:)) {
+            menuItem.state = menuItem.tag == Animations.level.rawValue ? .on : .off
+        }
+        return true
     }
 
     @objc func showAbout(_ sender: Any?) {

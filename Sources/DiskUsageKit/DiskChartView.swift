@@ -68,9 +68,18 @@ final class DiskChartView: NSView {
         var isLeaf = false
     }
 
-    var style = DiskChartStyle.flat { didSet { invalidate() } }
-    var colorMode = DiskColorMode.type { didSet { invalidate() } }
-    var root: DiskNode? { didSet { hovered = nil; invalidate() } }
+    var style = DiskChartStyle.flat { didSet { transition = nil; invalidate() } }
+    var colorMode = DiskColorMode.type { didSet { transition = nil; invalidate() } }
+    var root: DiskNode? { didSet { hovered = nil; transition = nil; invalidate() } }
+
+    /// Animation en cours (voir ChartAnimations.swift) ; nil au repos, et rien ne tourne alors.
+    var transition: ChartTransition? { didSet { transitionChanged() } }
+    /// Vrai pendant la capture d'une image du graphique : dessin normal, sans animation.
+    var isSnapshotting = false
+    /// Analyse en direct : le bloc des dossiers encore en lecture (hachuré), et pas d'interaction.
+    var pendingNode: DiskNode? { didSet { needsDisplay = true } }
+    var isLive = false { didSet { hovered = nil } }
+    var displayLink: CADisplayLink?
 
     var onHover: ((DiskNode?) -> Void)?
     var onDive: ((DiskNode) -> Void)?
@@ -82,9 +91,9 @@ final class DiskChartView: NSView {
     private(set) var shapes: [Shape] = []
     private var layoutSize = CGSize.zero
     private var layoutValid = false
-    private var center = CGPoint.zero
-    private var centerRadius: CGFloat = 0
-    private let overlay = HighlightOverlay()
+    private(set) var center = CGPoint.zero
+    private(set) var centerRadius: CGFloat = 0
+    let overlay = HighlightOverlay()
     private var hovered: DiskNode? { didSet { if hovered !== oldValue { updateOverlay() } } }
 
     override init(frame: NSRect) {
@@ -153,6 +162,7 @@ final class DiskChartView: NSView {
     }
 
     override func mouseMoved(with event: NSEvent) {
+        guard !isLive else { return }
         let point = convert(event.locationInWindow, from: nil)
         let node = node(at: point)
         hovered = node === root && style != .icicle ? nil : node
@@ -166,7 +176,7 @@ final class DiskChartView: NSView {
 
     override func mouseDown(with event: NSEvent) {
         window?.makeFirstResponder(self)
-        guard let node = node(at: convert(event.locationInWindow, from: nil)) else { return }
+        guard !isLive, let node = node(at: convert(event.locationInWindow, from: nil)) else { return }
         if event.clickCount == 2, !node.isDirectory, !node.isAggregate { onOpen?(node); return }
         guard event.clickCount == 1 else { return }
         if node === root { onUp?(); return }
@@ -176,7 +186,7 @@ final class DiskChartView: NSView {
     }
 
     override func menu(for event: NSEvent) -> NSMenu? {
-        guard let node = node(at: convert(event.locationInWindow, from: nil)) else { return nil }
+        guard !isLive, let node = node(at: convert(event.locationInWindow, from: nil)) else { return nil }
         return menuProvider?(node)
     }
 
@@ -231,7 +241,7 @@ final class DiskChartView: NSView {
 
     // MARK: Mise en page
 
-    private func ensureLayout() {
+    func ensureLayout() {
         guard !layoutValid else { return }
         layoutValid = true
         layoutSize = bounds.size
@@ -454,6 +464,10 @@ final class DiskChartView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         ensureLayout()
         guard let context = NSGraphicsContext.current?.cgContext else { return }
+        if !isSnapshotting, let transition {
+            transition.draw(in: context, bounds: bounds)
+            return
+        }
         guard let root, root.size > 0 else {
             drawText(root == nil ? "" : L("Dossier vide"), in: bounds.insetBy(dx: 20, dy: bounds.height / 2 - 10),
                      font: .systemFont(ofSize: 13), color: .secondaryLabelColor, alignment: .center)
@@ -465,6 +479,35 @@ final class DiskChartView: NSView {
         case .sunburst, .baobab, .donut: drawArcs(context, root: root)
         case .icicle: drawIcicle(context)
         case .histogram: drawHistogram(context, root: root)
+        }
+        if let pendingNode, let shape = shapes.first(where: { $0.node === pendingNode }), shape.rect.width > 2 { drawPending(context, shape.rect) }
+    }
+
+    /// Dossiers encore en lecture pendant l'analyse en direct : bloc hachuré.
+    private func drawPending(_ context: CGContext, _ rect: CGRect) {
+        let path = CGPath(roundedRect: rect, cornerWidth: min(5, rect.width / 2), cornerHeight: min(5, rect.height / 2), transform: nil)
+        context.saveGState()
+        context.addPath(path)
+        context.setFillColor(NSColor.windowBackgroundColor.cgColor)
+        context.fillPath()
+        context.addPath(path)
+        context.clip()
+        context.setStrokeColor(NSColor.separatorColor.cgColor)
+        context.setLineWidth(1)
+        var x = rect.minX - rect.height
+        while x < rect.maxX {
+            context.move(to: CGPoint(x: x, y: rect.maxY))
+            context.addLine(to: CGPoint(x: x + rect.height, y: rect.minY))
+            x += 10
+        }
+        context.strokePath()
+        context.restoreGState()
+        context.addPath(path)
+        context.setStrokeColor(NSColor.separatorColor.cgColor)
+        context.strokePath()
+        if rect.width > 110, rect.height > 30 {
+            drawText(L("Lecture en cours…"), in: CGRect(x: rect.minX + 6, y: rect.midY - 8, width: rect.width - 12, height: 16),
+                     font: .systemFont(ofSize: 11, weight: .semibold), color: .secondaryLabelColor, alignment: .center)
         }
     }
 
@@ -664,7 +707,7 @@ final class DiskChartView: NSView {
 }
 
 /// Contour du bloc survolé, dessiné au-dessus du graphique sans le redessiner.
-private final class HighlightOverlay: NSView {
+final class HighlightOverlay: NSView {
     var path: CGPath? { didSet { needsDisplay = true } }
 
     override var isFlipped: Bool { true }

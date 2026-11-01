@@ -5,6 +5,7 @@ Analyseur d'occupation des disques pour macOS, natif (AppKit, Swift), sans dépe
 - **Accueil**, en listes groupées façon iOS dans une fenêtre compacte : les disques (barre d'occupation, espace libre sur le total), les dossiers usuels, les analyses récentes (taille et date, menu contextuel pour les retirer) et une zone où déposer un dossier, avec le bouton « Choisir un dossier… » (⌘O). On peut aussi déposer un dossier sur l'icône du Dock.
 - **Onglets natifs** : chaque analyse s'ouvre dans un onglet. ⌘clic sur un dossier (graphique, liste ou fil d'Ariane) ou « Ouvrir dans un nouvel onglet » du menu contextuel ouvre un sous-dossier à côté, sans nouvelle analyse (l'arbre est partagé). ⌘T ou le bouton « + » ouvre un nouvel accueil, ⇧⌘H revient à l'accueil.
 - **Page d'analyse** : sept vues accessibles par les icônes ou par ⌘1 … ⌘7 (carte épurée par défaut), avec les couleurs par type, ancienneté ou branche. On navigue en cliquant dans un dossier, avec le fil d'Ariane, précédent / suivant (⌘[ / ⌘]) et le dossier parent (⌘↑ ou ⌫). Le survol affiche la taille, la part du parent, le nombre de fichiers, les types principaux et la date. Les actions sont « Afficher dans le Finder » (⌥⌘R), « Placer dans la corbeille » (menu contextuel) et « Analyser de nouveau » (⌘R).
+- **Animations**, réglables dans **Présentation › Animations** et **iBaobab › Réglages…** (⌘,) : quatre niveaux comme dans iExplorer (sans animation, légères par défaut, complètes, Whaouh+++) et un interrupteur par effet. Légères : le graphique se construit à la fin d'une analyse, zoom en entrant dans un dossier, jauges des disques qui se remplissent. Complètes : anneaux du soleil qui se déploient, blocs qui glissent d'une vue à l'autre, bloc mis à la corbeille qui s'effrite, dossiers qui apparaissent pendant l'analyse. Whaouh+++ : un baobab pousse à la fin d'une analyse, pluie de feuilles après avoir libéré plus d'1 Go, zone de dépôt qui aspire le dossier glissé. Les effets ne jouent qu'au moment d'une action, à partir d'images du graphique capturées avant et après : au repos, rien ne tourne. Aucun ne joue si « Réduire les animations » est activé dans macOS.
 - **Mises à jour** : indicateur à droite de la barre de titre (flèche verte quand une version est disponible, flèches jaunes pendant le téléchargement) et menu **iBaobab › Rechercher les mises à jour…**.
 
 ## Compiler et lancer
@@ -20,7 +21,7 @@ Nécessite macOS 26+ et Xcode (Swift 6). Chaque commit poussé incrémente la ve
 
 Le paquet exporte deux bibliothèques, utilisées aussi par [Enhanced File Manager](https://github.com/blegal/EnhancedFileManager) :
 
-- **DiskUsageKit** : scan, modèle `DiskNode`, les sept graphiques et la page d'analyse (`DiskUsageView`).
+- **DiskUsageKit** : scan, modèle `DiskNode`, les sept graphiques et la page d'analyse (`DiskUsageView`), avec leurs animations (`DiskEffects.isEnabled`, fourni par l'app ; aucune par défaut).
 - **UpdateKit** : mise à jour automatique depuis les releases GitHub (`Updater`, `UpdateStatusButton`).
 
 ```swift

@@ -31,6 +31,10 @@ public final class DiskUsageView: NSView {
     private var scanner: DiskScanner?
     private var progressTimer: Timer?
     private var requestedURL: URL?
+    /// Animation de la prochaine racine affichée (fin d'une analyse) ; sinon, celle d'une navigation.
+    private var completionChange: RootChange?
+    /// Dossiers déjà placés dans le graphique pendant l'analyse en direct.
+    private var liveCount = 0
 
     /// Vue qui reçoit le focus clavier.
     public var focusView: NSView { chart }
@@ -38,11 +42,14 @@ public final class DiskUsageView: NSView {
     public var style: DiskChartStyle = .flat {
         didSet {
             styleControl.selectedSegment = style.rawValue
-            chart.style = style
-            list.isHidden = !style.hasList
-            list.expandable = style == .baobab
-            list.reload(root: chart.root)
-            content.style = style
+            chart.restyle {
+                chart.style = style
+                list.isHidden = !style.hasList
+                list.expandable = style == .baobab
+                list.reload(root: chart.isLive ? nil : chart.root)
+                content.style = style
+                content.layoutSubtreeIfNeeded()
+            }
         }
     }
 
@@ -139,6 +146,7 @@ public final class DiskUsageView: NSView {
     /// Affiche un dossier : réutilise l'arbre s'il le contient, sinon lance une analyse.
     public func show(_ url: URL, forceRescan: Bool = false) {
         requestedURL = url
+        defer { completionChange = nil }
         if !forceRescan, let tree, let rootURL = tree.rootURL, url.isInside(rootURL) {
             let root = rootURL.standardizedFileURL.path, target = url.standardizedFileURL.path
             let relative = target == root ? [] : target.dropFirst(root == "/" ? 1 : root.count + 1).split(separator: "/").map(String.init)
@@ -150,7 +158,7 @@ public final class DiskUsageView: NSView {
         // En remontant, le dossier déjà analysé est réutilisé tel quel.
         var reuse: [String: DiskNode] = [:]
         if !forceRescan, let tree, let rootURL = tree.rootURL, rootURL.isInside(url) { reuse[rootURL.standardizedFileURL.path] = tree }
-        startScan(url, reuse: reuse)
+        startScan(url, reuse: reuse, isRescan: forceRescan)
     }
 
     /// Affiche un dossier en partageant l'arbre déjà analysé par une autre vue (nouvel onglet).
@@ -169,15 +177,20 @@ public final class DiskUsageView: NSView {
         progressTimer?.invalidate()
         progressTimer = nil
         tree = nil
+        chart.isLive = false
+        chart.pendingNode = nil
         chart.root = nil
         list.reload(root: nil)
         spinner.stopAnimation(nil)
     }
 
-    private func startScan(_ url: URL, reuse: [String: DiskNode]) {
+    private func startScan(_ url: URL, reuse: [String: DiskNode], isRescan: Bool) {
         scanner?.cancel()
         let scanner = DiskScanner(reuse: reuse)
         self.scanner = scanner
+        liveCount = 0
+        chart.isLive = false
+        chart.pendingNode = nil
         chart.root = nil
         list.reload(root: nil)
         infoLabel.stringValue = ""
@@ -190,6 +203,7 @@ public final class DiskUsageView: NSView {
             guard let self, let scanner else { return }
             let progress = scanner.progress
             statusLabel.stringValue = L("Analyse de « \(name) »… \(progress.files.formatted()) fichiers · \(Format.size(progress.bytes))")
+            if DiskEffects.on(.liveScan) { showLive(scanner.completedFolders(), bytes: progress.bytes, name: url.lastPathComponent) }
         }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let result = scanner.scan(url)
@@ -199,18 +213,41 @@ public final class DiskUsageView: NSView {
                 progressTimer?.invalidate()
                 progressTimer = nil
                 spinner.stopAnimation(nil)
-                guard let result else { return }
+                let wasLive = chart.isLive
+                chart.isLive = false
+                guard let result else { chart.pendingNode = nil; return }
                 tree = result
+                completionChange = DiskEffects.on(.baobab) && !isRescan ? .baobab : wasLive ? .live : .reveal
                 let elapsed = Date().timeIntervalSince(started)
                 statusLabel.stringValue = L("\(result.count.formatted()) fichiers · \(Format.size(result.size)) · analysé en \(elapsed.formatted(.number.precision(.fractionLength(1)))) s")
                 onScanFinished?(url, result.size)
                 show(requestedURL ?? url)
+                chart.pendingNode = nil
             }
         }
     }
 
-    private func display(_ node: DiskNode) {
-        chart.root = node
+    /// Analyse en direct : les dossiers terminés et un bloc hachuré pour le reste.
+    private func showLive(_ folders: [DiskNode], bytes: Int64, name: String) {
+        guard folders.count != liveCount, !folders.isEmpty else { return }
+        liveCount = folders.count
+        let done = folders.reduce(Int64(0)) { $0 + $1.size }
+        let pending = DiskNode.group(name: L("Lecture en cours…"), size: max(bytes - done, done / 20, 1), count: 0, modified: 0,
+                                     sizes: CategorySizes(repeating: 0))
+        pending.category = .other
+        let preview = DiskNode(name: name)
+        preview.children = folders + [pending]
+        preview.finish()
+        let before = chart.root != nil && chart.needsCapture(.live) ? chart.capture() : nil
+        chart.isLive = true
+        chart.pendingNode = pending
+        chart.show(preview, change: .live, before: before)
+        list.reload(root: nil)
+        infoLabel.stringValue = ""
+    }
+
+    private func display(_ node: DiskNode, change: RootChange? = nil, before: ChartSnapshot? = nil) {
+        chart.show(node, change: change ?? completionChange ?? .navigate, before: before)
         list.reload(root: node)
         showInfo(nil)
     }
@@ -222,8 +259,10 @@ public final class DiskUsageView: NSView {
         var components = url.standardizedFileURL.path.dropFirst(root == "/" ? 1 : root.count + 1).split(separator: "/").map(String.init)
         guard let last = components.popLast(), let parent = tree.descendant(components),
               let node = parent.children?.first(where: { $0.name == last }) else { return }
+        let before = chart.needsCapture(.trash(node)) ? chart.capture() : nil
         node.detach()
-        display(current)
+        display(current, change: .trash(node), before: before)
+        if node.size >= 1_000_000_000 { chart.rainLeaves(freed: node.size) }
     }
 
     // MARK: Interaction
@@ -233,7 +272,7 @@ public final class DiskUsageView: NSView {
     }
 
     @objc private func colorChanged(_ sender: NSPopUpButton) {
-        chart.colorMode = DiskColorMode(rawValue: sender.indexOfSelectedItem) ?? .type
+        chart.restyle { chart.colorMode = DiskColorMode(rawValue: sender.indexOfSelectedItem) ?? .type }
         list.reloadColors()
     }
 

@@ -1,6 +1,7 @@
 import AppKit
 import DiskUsageKit
 import BaobabL10n
+import QuartzCore
 
 /// Onglet « Accueil », en listes groupées façon iOS : disques, dossiers courants, analyses récentes,
 /// puis une zone où déposer un dossier (ou ouvrir le sélecteur).
@@ -97,6 +98,13 @@ final class HomeViewController: NSViewController {
         // L'espace libre a pu changer depuis la dernière visite.
         reloadDisks()
         reloadRecents()
+    }
+
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        // Les jauges des disques se remplissent, l'une après l'autre.
+        guard Animations.isOn(.gauges) else { return }
+        for (index, row) in disksGroup.rows.enumerated() { row.animateBar(delay: Double(index) * 0.12) }
     }
 
     private static func sectionHeader(_ title: String) -> NSView {
@@ -247,6 +255,8 @@ private final class GroupView: NSView {
     }
 
     func removeAll() { stack.arrangedSubviews.forEach { $0.removeFromSuperview() } }
+
+    var rows: [HomeRow] { stack.arrangedSubviews.compactMap { $0 as? HomeRow } }
 }
 
 /// Ligne cliquable : pastille colorée (ou symbole gris), titre, sous-titre, texte à droite, barre et chevron facultatifs.
@@ -325,6 +335,10 @@ private final class HomeRow: NSView {
 
     override func menu(for event: NSEvent) -> NSMenu? { menuProvider?() }
 
+    func animateBar(delay: Double) {
+        if fraction != nil { bar.animate(delay: delay) }
+    }
+
     override func accessibilityPerformPress() -> Bool {
         onClick?()
         return true
@@ -372,16 +386,50 @@ private final class SymbolTile: NSView {
 }
 
 /// Barre d'occupation fine : accentuée, orange au-delà de 80 %, rouge au-delà de 90 %.
+/// Peut se remplir depuis zéro (effet « jauges ») ; l'horloge d'affichage ne tourne que pendant ce temps.
 private final class UsageBar: NSView {
     var fraction = 0.0 { didSet { needsDisplay = true } }
+    /// Valeur affichée pendant l'animation (nil au repos : `fraction`).
+    private var shown: Double?
+    private var link: CADisplayLink?
+    private var start: CFTimeInterval = 0
+
+    func animate(delay: Double) {
+        link?.invalidate()
+        shown = 0
+        start = CACurrentMediaTime() + delay
+        let link = displayLink(target: self, selector: #selector(tick(_:)))
+        link.add(to: .main, forMode: .common)
+        self.link = link
+        needsDisplay = true
+    }
+
+    @objc private func tick(_ link: CADisplayLink) {
+        let q = min(1, max(0, (CACurrentMediaTime() - start) / 0.9))
+        shown = fraction * (1 - pow(1 - q, 3))
+        if q >= 1 {
+            shown = nil
+            link.invalidate()
+            self.link = nil
+        }
+        needsDisplay = true
+    }
+
+    override func removeFromSuperview() {
+        link?.invalidate()
+        link = nil
+        super.removeFromSuperview()
+    }
 
     override func draw(_ dirtyRect: NSRect) {
         let radius = bounds.height / 2
         NSColor.quaternaryLabelColor.setFill()
         NSBezierPath(roundedRect: bounds, xRadius: radius, yRadius: radius).fill()
-        let color: NSColor = fraction > 0.9 ? .systemRed : fraction > 0.8 ? .systemOrange : .controlAccentColor
+        let value = min(1, max(0, shown ?? fraction))
+        guard value > 0.001 else { return }
+        let color: NSColor = value > 0.9 ? .systemRed : value > 0.8 ? .systemOrange : .controlAccentColor
         color.setFill()
-        let width = max(bounds.height, bounds.width * CGFloat(min(1, max(0, fraction))))
+        let width = max(bounds.height, bounds.width * CGFloat(value))
         NSBezierPath(roundedRect: NSRect(x: 0, y: 0, width: width, height: bounds.height), xRadius: radius, yRadius: radius).fill()
     }
 }
@@ -392,9 +440,21 @@ private final class UsageBar: NSView {
 private final class DropZoneView: NSView {
     var onChoose: (() -> Void)?
     var isTargeted = false { didSet { needsDisplay = true } }
+    /// Effet « dépôt magnétique » : de 0 à 1 à l'approche d'un dossier glissé (halo et bordure accentués).
+    var glow: CGFloat = 0 {
+        didSet {
+            guard glow != oldValue else { return }
+            layer?.shadowColor = NSColor.controlAccentColor.cgColor
+            layer?.shadowOffset = .zero
+            layer?.shadowRadius = 16 * glow
+            layer?.shadowOpacity = Float(0.9 * glow)
+            needsDisplay = true
+        }
+    }
 
     init() {
         super.init(frame: .zero)
+        wantsLayer = true
         let icon = NSImageView(image: NSImage(systemSymbolName: "square.and.arrow.down", accessibilityDescription: nil) ?? NSImage())
         icon.symbolConfiguration = .init(pointSize: 18, weight: .regular)
         icon.contentTintColor = .secondaryLabelColor
@@ -421,14 +481,52 @@ private final class DropZoneView: NSView {
 
     override func draw(_ dirtyRect: NSRect) {
         let path = NSBezierPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), xRadius: 12, yRadius: 12)
-        if isTargeted {
-            NSColor.controlAccentColor.withAlphaComponent(0.08).setFill()
+        let accent = max(isTargeted ? 1 : 0, glow)
+        if accent > 0 {
+            if glow > 0 {
+                NSColor.controlBackgroundColor.setFill()
+                path.fill()
+            }
+            NSColor.controlAccentColor.withAlphaComponent(0.06 + 0.08 * glow).setFill()
             path.fill()
         }
-        path.lineWidth = 1.5
+        path.lineWidth = 1.5 + glow
         path.setLineDash([6, 4], count: 2, phase: 0)
-        (isTargeted ? NSColor.controlAccentColor : NSColor.tertiaryLabelColor).setStroke()
+        (accent > 0 ? NSColor.controlAccentColor.withAlphaComponent(0.55 + 0.45 * accent) : NSColor.tertiaryLabelColor).setStroke()
         path.stroke()
+    }
+
+    /// Onde lumineuse au dépôt : trois cercles partent du centre (Core Animation, puis retirés).
+    func ripple() {
+        guard let layer else { return }
+        let center = CGPoint(x: bounds.midX, y: bounds.midY)
+        let radius = max(bounds.width, bounds.height) * 0.55
+        for index in 0..<3 {
+            let ring = CAShapeLayer()
+            ring.frame = bounds
+            ring.fillColor = nil
+            ring.strokeColor = NSColor.controlAccentColor.cgColor
+            ring.lineWidth = 2
+            ring.opacity = 0
+            layer.addSublayer(ring)
+            let small = CGPath(ellipseIn: CGRect(x: center.x - 10, y: center.y - 10, width: 20, height: 20), transform: nil)
+            let large = CGPath(ellipseIn: CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2), transform: nil)
+            let grow = CABasicAnimation(keyPath: "path")
+            grow.fromValue = small
+            grow.toValue = large
+            let fade = CABasicAnimation(keyPath: "opacity")
+            fade.fromValue = 1
+            fade.toValue = 0
+            let group = CAAnimationGroup()
+            group.animations = [grow, fade]
+            group.duration = 0.9
+            group.beginTime = CACurrentMediaTime() + Double(index) * 0.15
+            group.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            CATransaction.begin()
+            CATransaction.setCompletionBlock { ring.removeFromSuperlayer() }
+            ring.add(group, forKey: "ripple")
+            CATransaction.commit()
+        }
     }
 }
 
@@ -459,18 +557,55 @@ private final class DropTargetView: NSView {
         return urls.first { (try? $0.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true }
     }
 
+    private var accepts = false
+
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        let accepted = folder(in: sender) != nil
-        dropZone?.isTargeted = accepted
-        return accepted ? .generic : []
+        accepts = folder(in: sender) != nil
+        dropZone?.isTargeted = accepts
+        return draggingUpdated(sender)
     }
 
-    override func draggingExited(_ sender: NSDraggingInfo?) { dropZone?.isTargeted = false }
+    /// Dépôt magnétique : la zone s'illumine à mesure que le dossier s'en approche.
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        if accepts, Animations.isOn(.magneticDrop), let zone = dropZone {
+            let point = zone.convert(sender.draggingLocation, from: nil)
+            let dx = max(zone.bounds.minX - point.x, 0, point.x - zone.bounds.maxX)
+            let dy = max(zone.bounds.minY - point.y, 0, point.y - zone.bounds.maxY)
+            zone.glow = max(0, 1 - hypot(dx, dy) / 320)
+        }
+        return accepts ? .generic : []
+    }
+
+    override func draggingExited(_ sender: NSDraggingInfo?) {
+        dropZone?.isTargeted = false
+        dropZone?.glow = 0
+    }
+
+    override func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        // Le dossier glissé est aspiré vers le centre de la zone (animation de dépôt d'AppKit).
+        if Animations.isOn(.magneticDrop) { sender.animatesToDestination = true }
+        return true
+    }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
         dropZone?.isTargeted = false
-        guard let url = folder(in: sender) else { return false }
-        onDrop?(url)
+        guard let url = folder(in: sender) else { dropZone?.glow = 0; return false }
+        guard Animations.isOn(.magneticDrop), let zone = dropZone else {
+            dropZone?.glow = 0
+            onDrop?(url)
+            return true
+        }
+        let center = convert(CGPoint(x: zone.bounds.midX, y: zone.bounds.midY), from: zone)
+        sender.enumerateDraggingItems(options: [], for: self, classes: [NSURL.self], searchOptions: [:]) { item, _, _ in
+            item.draggingFrame = CGRect(x: center.x - 8, y: center.y - 8, width: 16, height: 16)
+        }
+        zone.glow = 1
+        zone.ripple()
+        // L'analyse s'ouvre une fois l'onde partie, pour qu'on la voie.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self, weak zone] in
+            zone?.glow = 0
+            self?.onDrop?(url)
+        }
         return true
     }
 }

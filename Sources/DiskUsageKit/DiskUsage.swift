@@ -269,6 +269,8 @@ final class DiskScanner: @unchecked Sendable {
     private let scannedFiles = Atomic<Int>(0)
     private let scannedBytes = Atomic<Int64>(0)
     private let cancelled = Atomic<Bool>(false)
+    /// Dossiers de premier niveau déjà terminés, pour l'analyse en direct.
+    private let completed = Mutex<[DiskNode]>([])
     /// Sous-arbres déjà analysés, réutilisés tels quels (par chemin).
     private let reuse: [String: DiskNode]
 
@@ -281,6 +283,9 @@ final class DiskScanner: @unchecked Sendable {
     var isCancelled: Bool { cancelled.load(ordering: .relaxed) }
 
     func cancel() { cancelled.store(true, ordering: .relaxed) }
+
+    /// Dossiers de premier niveau terminés jusqu'ici (sous-arbres complets, qui ne changent plus).
+    func completedFolders() -> [DiskNode] { completed.withLock { $0 } }
 
     /// Arbre du dossier, ou nil si l'analyse a été annulée.
     func scan(_ url: URL) -> DiskNode? {
@@ -318,6 +323,7 @@ final class DiskScanner: @unchecked Sendable {
         if depth > 0, !reuse.isEmpty, let cached = reuse[path] {
             cached.parent = nil
             add(files: cached.count, bytes: cached.size)
+            if depth == 1 { completed.withLock { $0.append(cached) } }
             return cached
         }
         var files: [File] = []
@@ -388,6 +394,7 @@ final class DiskScanner: @unchecked Sendable {
         for child in children { child.parent = node }
         node.children = children
         node.finish()
+        if depth == 1 { completed.withLock { $0.append(node) } }
         return node
     }
 

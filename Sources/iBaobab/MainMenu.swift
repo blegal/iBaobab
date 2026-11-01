@@ -13,6 +13,8 @@ enum MainMenu {
         app.addItem(withTitle: L("Rechercher les mises à jour…"), action: #selector(Updater.checkForUpdates(_:)), keyEquivalent: "")
             .target = MainActor.assumeIsolated { Updater.shared }
         app.addItem(.separator())
+        app.addItem(withTitle: L("Réglages…"), action: #selector(AppDelegate.showSettings(_:)), keyEquivalent: ",")
+        app.addItem(.separator())
         let services = NSMenu()
         app.addItem(withTitle: L("Services"), action: nil, keyEquivalent: "").submenu = services
         NSApp.servicesMenu = services
@@ -43,6 +45,14 @@ enum MainMenu {
             let item = present.addItem(withTitle: style.title, action: #selector(AnalysisViewController.selectStyle(_:)), keyEquivalent: "\(style.rawValue + 1)")
             item.tag = style.rawValue
         }
+        present.addItem(.separator())
+        let animations = NSMenu(title: L("Animations"))
+        for level in AnimationLevel.allCases {
+            animations.addItem(withTitle: level.title, action: #selector(AppDelegate.setAnimationLevel(_:)), keyEquivalent: "").tag = level.rawValue
+        }
+        animations.addItem(.separator())
+        animations.addItem(withTitle: L("Réglages des animations…"), action: #selector(AppDelegate.showSettings(_:)), keyEquivalent: "")
+        present.addItem(withTitle: L("Animations"), action: nil, keyEquivalent: "").submenu = animations
         present.addItem(.separator())
         present.addItem(withTitle: L("Afficher la barre d'onglets"), action: #selector(NSWindow.toggleTabBar(_:)), keyEquivalent: "")
         present.addItem(withTitle: L("Afficher tous les onglets"), action: #selector(NSWindow.toggleTabOverview(_:)), keyEquivalent: "\\")
