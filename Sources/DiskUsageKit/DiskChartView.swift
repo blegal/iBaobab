@@ -1,4 +1,5 @@
 import AppKit
+import BaobabL10n
 
 /// Les sept représentations de l'occupation du disque.
 public enum DiskChartStyle: Int, CaseIterable {
@@ -6,13 +7,13 @@ public enum DiskChartStyle: Int, CaseIterable {
 
     public var title: String {
         switch self {
-        case .cushion: "Carte coussin"
-        case .flat: "Carte épurée"
-        case .sunburst: "Soleil"
-        case .icicle: "Partition empilée"
-        case .histogram: "Histogramme"
-        case .donut: "Anneau et liste"
-        case .baobab: "Liste et soleil"
+        case .cushion: L("Carte coussin")
+        case .flat: L("Carte épurée")
+        case .sunburst: L("Soleil")
+        case .icicle: L("Partition empilée")
+        case .histogram: L("Histogramme")
+        case .donut: L("Anneau et liste")
+        case .baobab: L("Liste et soleil")
         }
     }
 
@@ -36,9 +37,9 @@ enum DiskColorMode: Int, CaseIterable {
 
     var title: String {
         switch self {
-        case .type: "Par type"
-        case .age: "Par ancienneté"
-        case .branch: "Par branche"
+        case .type: L("Par type")
+        case .age: L("Par ancienneté")
+        case .branch: L("Par branche")
         }
     }
 
@@ -411,7 +412,7 @@ final class DiskChartView: NSView {
         var kept = Array(kids.prefix(limit).filter { Double($0.size) / total >= minimum })
         if kept.count < kids.count {
             let rest = kids[kept.count...]
-            let group = DiskNode.group(name: "\(rest.count) autres éléments", of: rest)
+            let group = DiskNode.group(name: rest.count == 1 ? L("\(rest.count) autre élément") : L("\(rest.count) autres éléments"), of: rest)
             group.category = .other
             group.parent = node
             kept.append(group)
@@ -454,7 +455,7 @@ final class DiskChartView: NSView {
         ensureLayout()
         guard let context = NSGraphicsContext.current?.cgContext else { return }
         guard let root, root.size > 0 else {
-            drawText(root == nil ? "" : "Dossier vide", in: bounds.insetBy(dx: 20, dy: bounds.height / 2 - 10),
+            drawText(root == nil ? "" : L("Dossier vide"), in: bounds.insetBy(dx: 20, dy: bounds.height / 2 - 10),
                      font: .systemFont(ofSize: 13), color: .secondaryLabelColor, alignment: .center)
             return
         }
@@ -576,7 +577,7 @@ final class DiskChartView: NSView {
         drawText(style == .donut ? Format.items(visibleChildren(root).count) : Format.size(root.size), in: CGRect(x: center.x - width / 2, y: center.y + (large ? 8 : 1), width: width, height: 15),
                  font: .systemFont(ofSize: 11), color: .secondaryLabelColor, alignment: .center)
         if style != .donut, root.parent != nil || root.rootURL?.path != "/", r > 34 {
-            drawText("↑ remonter", in: CGRect(x: center.x - width / 2, y: center.y + 16, width: width, height: 14),
+            drawText(L("↑ remonter"), in: CGRect(x: center.x - width / 2, y: center.y + 16, width: width, height: 14),
                      font: .systemFont(ofSize: 10), color: .tertiaryLabelColor, alignment: .center)
         }
     }
@@ -589,7 +590,7 @@ final class DiskChartView: NSView {
             context.fillPath()
             guard r.width > 34 else { continue }
             let onColor = shape.depth > 0
-            let title = shape.depth == 0 && root?.rootURL?.path != "/" ? "\(shape.node.name)   (cliquer pour remonter)" : shape.node.name
+            let title = shape.depth == 0 && root?.rootURL?.path != "/" ? L("\(shape.node.name)   (cliquer pour remonter)") : shape.node.name
             drawText(title, in: CGRect(x: r.minX + 6, y: r.minY + 4, width: r.width - 10, height: 15),
                      font: .systemFont(ofSize: 11, weight: .semibold), color: onColor ? .white : .labelColor, shadow: onColor)
             if r.width > 50, r.height > 32 {
@@ -635,8 +636,8 @@ final class DiskChartView: NSView {
     }
 
     static func percent(_ fraction: Double) -> String {
-        if fraction > 0, fraction < 0.001 { return "< 0,1 %" }
-        return (fraction * 100).formatted(.number.precision(.fractionLength(fraction >= 0.1 ? 0 : 1))) + " %"
+        if fraction > 0, fraction < 0.001 { return L("< 0,1 %") }
+        return L("\((fraction * 100).formatted(.number.precision(.fractionLength(fraction >= 0.1 ? 0 : 1)))) %")
     }
 
     /// Styles de texte partagés par tous les dessins (créés une fois).

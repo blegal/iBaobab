@@ -1,4 +1,5 @@
 import AppKit
+import BaobabL10n
 
 /// Mise en forme partagée entre EnhancedFileManager et iBaobab (complétée dans chaque application).
 public enum Format {
@@ -10,7 +11,7 @@ public enum Format {
 
     public static func size(_ bytes: Int64) -> String { byteFormatter.string(fromByteCount: bytes) }
 
-    public static func items(_ count: Int) -> String { count <= 1 ? "\(count) élément" : "\(count) éléments" }
+    public static func items(_ count: Int) -> String { count <= 1 ? L("\(count) élément") : L("\(count) éléments") }
 
     public static func availableCapacity(at url: URL) -> Int64? {
         let keys: Set<URLResourceKey> = [.volumeAvailableCapacityForImportantUsageKey, .volumeAvailableCapacityKey]

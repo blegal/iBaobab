@@ -1,5 +1,6 @@
 import AppKit
 import DiskUsageKit
+import BaobabL10n
 
 /// Onglet « Accueil », en listes groupées façon iOS : disques, dossiers courants, analyses récentes,
 /// puis une zone où déposer un dossier (ou ouvrir le sélecteur).
@@ -8,7 +9,7 @@ final class HomeViewController: NSViewController {
     var onChooseFolder: (() -> Void)?
 
     private let disksGroup = GroupView()
-    private let recentsHeader = HomeViewController.sectionHeader("Récents")
+    private let recentsHeader = HomeViewController.sectionHeader(L("Récents"))
     private let recentsGroup = GroupView()
     private let dropZone = DropZoneView()
     private var observers: [(NotificationCenter, NSObjectProtocol)] = []
@@ -20,14 +21,14 @@ final class HomeViewController: NSViewController {
         root.dropZone = dropZone
         root.onDrop = { [weak self] url in self?.onAnalyze?(url) }
 
-        let title = NSTextField(labelWithString: "Analyser")
+        let title = NSTextField(labelWithString: L("Analyser"))
         title.font = .systemFont(ofSize: 28, weight: .bold)
 
         let foldersGroup = GroupView()
         for url in Self.usualFolders() {
             let isHome = url == FileManager.default.homeDirectoryForCurrentUser
             let row = HomeRow(symbol: Self.symbol(for: url), tint: url.path.hasPrefix("/Applications") ? .systemIndigo : .systemBlue,
-                              title: isHome ? "Accueil" : FileManager.default.displayName(atPath: url.path))
+                              title: isHome ? L("Accueil") : FileManager.default.displayName(atPath: url.path))
             row.toolTip = url.path
             row.onClick = { [weak self] in self?.onAnalyze?(url) }
             foldersGroup.add(row)
@@ -35,7 +36,7 @@ final class HomeViewController: NSViewController {
 
         dropZone.onChoose = { [weak self] in self?.onChooseFolder?() }
 
-        let content = NSStackView(views: [title, Self.sectionHeader("Disques"), disksGroup, Self.sectionHeader("Dossiers"), foldersGroup,
+        let content = NSStackView(views: [title, Self.sectionHeader(L("Disques")), disksGroup, Self.sectionHeader(L("Dossiers")), foldersGroup,
                                           recentsHeader, recentsGroup, dropZone])
         content.orientation = .vertical
         content.alignment = .leading
@@ -124,7 +125,7 @@ final class HomeViewController: NSViewController {
             let tint: NSColor = !local ? .systemTeal : isInternal ? .systemGray : .systemOrange
             let row = HomeRow(symbol: symbol, tint: tint, title: values.volumeLocalizedName ?? url.displayName)
             if total > 0 {
-                row.trailing = "\(Format.size(free)) libres sur \(Format.size(total))"
+                row.trailing = L("\(Format.size(free)) libres sur \(Format.size(total))")
                 row.fraction = Double(total - free) / Double(total)
             }
             row.toolTip = url.path
@@ -138,6 +139,7 @@ final class HomeViewController: NSViewController {
     private static let relativeFormatter: RelativeDateTimeFormatter = {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .full
+        formatter.locale = Locale(identifier: Bundle.main.preferredLocalizations.first == "fr" ? "fr_FR" : "en_US")
         return formatter
     }()
 
@@ -150,17 +152,17 @@ final class HomeViewController: NSViewController {
             let parent = url.deletingLastPathComponent().path
             let place = parent.hasPrefix(home) ? "~" + parent.dropFirst(home.count) : parent
             let row = HomeRow(symbol: "clock", tint: nil, title: url.displayName)
-            let when = Date().timeIntervalSince(entry.date) < 60 ? "à l'instant" : Self.relativeFormatter.localizedString(for: entry.date, relativeTo: Date())
+            let when = Date().timeIntervalSince(entry.date) < 60 ? L("à l'instant") : Self.relativeFormatter.localizedString(for: entry.date, relativeTo: Date())
             row.subtitle = "\(place) · \(when)"
             row.trailing = Format.size(entry.size)
             row.toolTip = url.path
             row.onClick = { [weak self] in self?.onAnalyze?(url) }
             row.menuProvider = {
                 let menu = NSMenu()
-                menu.addItem(ClosureItem("Afficher dans le Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) })
+                menu.addItem(ClosureItem(L("Afficher dans le Finder")) { NSWorkspace.shared.activateFileViewerSelecting([url]) })
                 menu.addItem(.separator())
-                menu.addItem(ClosureItem("Retirer de l'historique") { RecentAnalyses.remove(url) })
-                menu.addItem(ClosureItem("Effacer l'historique") { RecentAnalyses.clear() })
+                menu.addItem(ClosureItem(L("Retirer de l'historique")) { RecentAnalyses.remove(url) })
+                menu.addItem(ClosureItem(L("Effacer l'historique")) { RecentAnalyses.clear() })
                 return menu
             }
             recentsGroup.add(row)
@@ -396,9 +398,9 @@ private final class DropZoneView: NSView {
         let icon = NSImageView(image: NSImage(systemSymbolName: "square.and.arrow.down", accessibilityDescription: nil) ?? NSImage())
         icon.symbolConfiguration = .init(pointSize: 18, weight: .regular)
         icon.contentTintColor = .secondaryLabelColor
-        let label = NSTextField(labelWithString: "Déposez un dossier ici, ou")
+        let label = NSTextField(labelWithString: L("Déposez un dossier ici, ou"))
         label.textColor = .secondaryLabelColor
-        let button = NSButton(title: "Choisir un dossier…", target: self, action: #selector(choose(_:)))
+        let button = NSButton(title: L("Choisir un dossier…"), target: self, action: #selector(choose(_:)))
         button.bezelStyle = .push
         button.keyEquivalent = "\r"
         button.controlSize = .large

@@ -1,6 +1,7 @@
 import AppKit
 import DiskUsageKit
 import UpdateKit
+import BaobabL10n
 
 /// Une fenêtre par onglet (onglets natifs) : l'accueil, puis une analyse par onglet.
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
@@ -40,7 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let home = HomeViewController()
         home.onAnalyze = { [weak self, weak home] url in self?.openAnalysis(url, beside: home?.view.window) }
         home.onChooseFolder = { [weak self] in self?.chooseFolder(nil) }
-        return show(home, title: "Accueil", beside: existing)
+        return show(home, title: L("Accueil"), beside: existing)
     }
 
     /// Ouvre une analyse dans un nouvel onglet ; `source` partage son arbre déjà analysé.
@@ -111,8 +112,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
         panel.treatsFilePackagesAsDirectories = true
-        panel.prompt = "Analyser"
-        panel.message = "Choisissez un disque ou un dossier à analyser."
+        panel.prompt = L("Analyser")
+        panel.message = L("Choisissez un disque ou un dossier à analyser.")
         let parent = NSApp.keyWindow
         let handler: (NSApplication.ModalResponse) -> Void = { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
@@ -123,7 +124,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc func showAbout(_ sender: Any?) {
         NSApp.orderFrontStandardAboutPanel(options: [
-            .credits: NSAttributedString(string: "Analyse de l'occupation des disques et des dossiers.",
+            .credits: NSAttributedString(string: L("Analyse de l'occupation des disques et des dossiers."),
                                          attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor]),
         ])
     }

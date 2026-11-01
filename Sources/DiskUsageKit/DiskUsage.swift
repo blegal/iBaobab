@@ -1,6 +1,7 @@
 import AppKit
 import Synchronization
 import UniformTypeIdentifiers
+import BaobabL10n
 
 /// Catégorie de fichier utilisée pour colorer les vues d'occupation du disque.
 enum DiskCategory: Int, CaseIterable {
@@ -8,14 +9,14 @@ enum DiskCategory: Int, CaseIterable {
 
     var title: String {
         switch self {
-        case .images: "Images"
-        case .video: "Vidéo"
-        case .audio: "Audio"
-        case .documents: "Documents"
-        case .code: "Code"
-        case .data: "Données"
-        case .archives: "Archives"
-        case .other: "Autres"
+        case .images: L("Images")
+        case .video: L("Vidéo")
+        case .audio: L("Audio")
+        case .documents: L("Documents")
+        case .code: L("Code")
+        case .data: L("Données")
+        case .archives: L("Archives")
+        case .other: L("Autres")
         }
     }
 
@@ -381,7 +382,7 @@ final class DiskScanner: @unchecked Sendable {
                 modified = max(modified, file.modified)
                 sizes[file.category.rawValue] += file.size
             }
-            children.append(DiskNode.group(name: "\(rest.count) autres fichiers", size: total, count: rest.count, modified: modified, sizes: sizes))
+            children.append(DiskNode.group(name: rest.count == 1 ? L("\(rest.count) autre fichier") : L("\(rest.count) autres fichiers"), size: total, count: rest.count, modified: modified, sizes: sizes))
         }
         let node = DiskNode(name: name)
         for child in children { child.parent = node }

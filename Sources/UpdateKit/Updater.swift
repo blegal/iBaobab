@@ -1,4 +1,5 @@
 import AppKit
+import BaobabL10n
 
 /// Mise à jour automatique depuis les releases GitHub, sans bibliothèque externe.
 /// Réglages lus dans Info.plist : `UpdateRepository` (« propriétaire/dépôt ») et
@@ -72,12 +73,12 @@ public final class Updater: NSObject {
                 if !quiet { propose(release) }
             } else {
                 state = .idle
-                if manual { alert("\(appName) est à jour.", "La version \(currentVersion) est la plus récente.") }
+                if manual { alert(L("\(appName) est à jour."), L("La version \(currentVersion) est la plus récente.")) }
             }
         } catch {
             state = pending.map { .available($0.version) } ?? .idle
             // Dépôt privé ou réseau absent : silence au lancement, message clair à la demande.
-            if manual { alert("Impossible de rechercher les mises à jour.", error.localizedDescription) }
+            if manual { alert(L("Impossible de rechercher les mises à jour."), error.localizedDescription) }
         }
     }
 
@@ -114,27 +115,27 @@ public final class Updater: NSObject {
         installTask = Task {
             do {
                 guard target.pathExtension == "app" else {
-                    throw UpdateError.command("L’application ne s’exécute pas depuis un paquet .app : installation impossible.")
+                    throw UpdateError.command(L("L’application ne s’exécute pas depuis un paquet .app : installation impossible."))
                 }
                 guard let dmgURL = release.dmg else { throw UpdateError.missingAsset }
                 guard let signatureURL = release.signature else { throw UpdateError.missingSignature }
                 guard let publicKey else { throw UpdateError.missingPublicKey }
 
-                window.showProgress("Téléchargement…", fraction: nil)
+                window.showProgress(L("Téléchargement…"), fraction: nil)
                 let (signature, response) = try await URLSession.shared.data(from: signatureURL)
                 if let status = (response as? HTTPURLResponse)?.statusCode, status != 200 { throw UpdateError.http(status) }
                 let dmg = try await Downloader.download(dmgURL) { fraction in
-                    window.showProgress("Téléchargement…", fraction: fraction)
+                    window.showProgress(L("Téléchargement…"), fraction: fraction)
                 }
                 defer { try? FileManager.default.removeItem(at: dmg) }
 
-                window.showProgress("Vérification de la signature…", fraction: nil)
+                window.showProgress(L("Vérification de la signature…"), fraction: nil)
                 guard try UpdateSignature.isValid(file: dmg, signature: signature, publicKey: publicKey) else {
                     throw UpdateError.badSignature
                 }
                 try Task.checkCancellation()
 
-                window.showProgress("Installation…", fraction: nil)
+                window.showProgress(L("Installation…"), fraction: nil)
                 let staged = try await Task.detached {
                     try UpdateInstaller.stage(dmg: dmg, bundleIdentifier: identifier, target: target)
                 }.value
@@ -142,7 +143,7 @@ public final class Updater: NSObject {
                 try UpdateInstaller.launchReplacement(pid: getpid(), staged: staged, target: target, relaunch: true)
                 NSApp.terminate(nil)
                 // Si la fermeture est refusée (opérations en cours), l'installation se fera à la sortie.
-                window.showProgress("La mise à jour sera installée en quittant \(appName).", fraction: 1)
+                window.showProgress(L("La mise à jour sera installée en quittant \(appName)."), fraction: 1)
             } catch is CancellationError {
                 window.showProposal()
                 state = .available(release.version)
@@ -152,8 +153,8 @@ public final class Updater: NSObject {
             } catch {
                 window.showProposal()
                 state = .available(release.version)
-                let open = alert("La mise à jour a échoué.", error.localizedDescription,
-                                 buttons: release.page == nil ? ["OK"] : ["OK", "Ouvrir la page de la version"])
+                let open = alert(L("La mise à jour a échoué."), error.localizedDescription,
+                                 buttons: release.page == nil ? ["OK"] : ["OK", L("Ouvrir la page de la version")])
                 if open == .alertSecondButtonReturn, let page = release.page { NSWorkspace.shared.open(page) }
             }
         }

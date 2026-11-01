@@ -1,5 +1,6 @@
 import AppKit
 import DiskUsageKit
+import BaobabL10n
 
 /// Onglet d'analyse : barre de navigation (précédent, suivant, parent, fil d'Ariane, Finder)
 /// au-dessus de la vue d'occupation partagée avec EnhancedFileManager.
@@ -31,15 +32,15 @@ final class AnalysisViewController: NSViewController, NSMenuItemValidation {
         history.segmentCount = 2
         history.trackingMode = .momentary
         history.segmentStyle = .separated
-        history.setImage(NSImage(systemSymbolName: "chevron.left", accessibilityDescription: "Précédent"), forSegment: 0)
-        history.setImage(NSImage(systemSymbolName: "chevron.right", accessibilityDescription: "Suivant"), forSegment: 1)
-        history.setToolTip("Précédent (⌘[)", forSegment: 0)
-        history.setToolTip("Suivant (⌘])", forSegment: 1)
+        history.setImage(NSImage(systemSymbolName: "chevron.left", accessibilityDescription: L("Précédent")), forSegment: 0)
+        history.setImage(NSImage(systemSymbolName: "chevron.right", accessibilityDescription: L("Suivant")), forSegment: 1)
+        history.setToolTip(L("Précédent (⌘[)"), forSegment: 0)
+        history.setToolTip(L("Suivant (⌘])"), forSegment: 1)
         history.target = self
         history.action = #selector(historyClicked(_:))
 
-        configure(upButton, symbol: "arrow.up", tip: "Dossier parent (⌘↑)", action: #selector(goUp(_:)))
-        configure(finderButton, symbol: "macwindow", tip: "Afficher dans le Finder (⌥⌘R)", action: #selector(revealInFinder(_:)))
+        configure(upButton, symbol: "arrow.up", tip: L("Dossier parent (⌘↑)"), action: #selector(goUp(_:)))
+        configure(finderButton, symbol: "macwindow", tip: L("Afficher dans le Finder (⌥⌘R)"), action: #selector(revealInFinder(_:)))
 
         pathControl.pathStyle = .standard
         pathControl.controlSize = .small

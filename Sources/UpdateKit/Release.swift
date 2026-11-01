@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import BaobabL10n
 
 /// Numéro de version « 1.2.3 » ou « 1.2.3-dev.4 » (préfixe « v » toléré).
 /// Les composants numériques manquants valent 0 ; une préversion précède la version finale.
@@ -59,14 +60,14 @@ public enum UpdateError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .unavailable:
-            return "Aucune version publiée n’a été trouvée : le dépôt est privé ou n’a pas encore de release. En attendant, téléchargez les nouvelles versions à la main."
-        case .http(let code): return "Le serveur des mises à jour a répondu par une erreur (\(code))."
-        case .missingAsset: return "La dernière version ne contient pas d’image disque pour cette application."
-        case .missingSignature: return "La dernière version n’est pas signée : installez-la à la main depuis la page de la version."
-        case .missingPublicKey: return "Cette copie de l’application ne contient pas de clé de vérification des mises à jour."
-        case .badSignature: return "La signature de l’image disque est invalide : le fichier a été modifié ou corrompu. La mise à jour est abandonnée."
-        case .appNotFound: return "L’image disque ne contient pas l’application attendue."
-        case .notWritable(let url): return "Impossible de remplacer l’application : vous n’avez pas le droit d’écrire dans « \(url.path) »."
+            return L("Aucune version publiée n’a été trouvée : le dépôt est privé ou n’a pas encore de release. En attendant, téléchargez les nouvelles versions à la main.")
+        case .http(let code): return L("Le serveur des mises à jour a répondu par une erreur (\(code)).")
+        case .missingAsset: return L("La dernière version ne contient pas d’image disque pour cette application.")
+        case .missingSignature: return L("La dernière version n’est pas signée : installez-la à la main depuis la page de la version.")
+        case .missingPublicKey: return L("Cette copie de l’application ne contient pas de clé de vérification des mises à jour.")
+        case .badSignature: return L("La signature de l’image disque est invalide : le fichier a été modifié ou corrompu. La mise à jour est abandonnée.")
+        case .appNotFound: return L("L’image disque ne contient pas l’application attendue.")
+        case .notWritable(let url): return L("Impossible de remplacer l’application : vous n’avez pas le droit d’écrire dans « \(url.path) ».")
         case .command(let message): return message
         }
     }

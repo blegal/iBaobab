@@ -1,4 +1,5 @@
 import AppKit
+import BaobabL10n
 
 /// Indicateur de mise à jour (barre d'outils, barre de titre) :
 /// flèche de rafraîchissement au repos, flèche verte si une version est disponible,
@@ -45,13 +46,13 @@ public final class UpdateStatusButton: NSButton {
         let symbol: String, tint: NSColor?, tip: String
         switch Updater.shared.state {
         case .idle:
-            (symbol, tint, tip) = ("arrow.clockwise", nil, "Rechercher les mises à jour")
+            (symbol, tint, tip) = ("arrow.clockwise", nil, L("Rechercher les mises à jour"))
         case .checking:
-            (symbol, tint, tip) = ("arrow.clockwise", .tertiaryLabelColor, "Recherche des mises à jour…")
+            (symbol, tint, tip) = ("arrow.clockwise", .tertiaryLabelColor, L("Recherche des mises à jour…"))
         case .available(let version):
-            (symbol, tint, tip) = ("arrow.down.circle.fill", .systemGreen, "Version \(version) disponible : cliquer pour l’installer")
+            (symbol, tint, tip) = ("arrow.down.circle.fill", .systemGreen, L("Version \(version) disponible : cliquer pour l’installer"))
         case .installing:
-            (symbol, tint, tip) = ("arrow.triangle.2.circlepath.circle.fill", .systemYellow, "Mise à jour en cours de téléchargement…")
+            (symbol, tint, tip) = ("arrow.triangle.2.circlepath.circle.fill", .systemYellow, L("Mise à jour en cours de téléchargement…"))
         }
         image = NSImage(systemSymbolName: symbol, accessibilityDescription: tip)
         contentTintColor = tint

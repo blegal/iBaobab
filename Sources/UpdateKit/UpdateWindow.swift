@@ -1,4 +1,5 @@
 import AppKit
+import BaobabL10n
 
 /// Fenêtre de proposition : notes de version, puis progression de l'installation.
 @MainActor
@@ -8,10 +9,10 @@ final class UpdateWindowController: NSWindowController, NSWindowDelegate {
     var onSkip: () -> Void = {}
     var onCancel: () -> Void = {}
 
-    private let installButton = NSButton(title: "Installer", target: nil, action: nil)
-    private let laterButton = NSButton(title: "Plus tard", target: nil, action: nil)
-    private let skipButton = NSButton(title: "Ignorer cette version", target: nil, action: nil)
-    private let cancelButton = NSButton(title: "Annuler", target: nil, action: nil)
+    private let installButton = NSButton(title: L("Installer"), target: nil, action: nil)
+    private let laterButton = NSButton(title: L("Plus tard"), target: nil, action: nil)
+    private let skipButton = NSButton(title: L("Ignorer cette version"), target: nil, action: nil)
+    private let cancelButton = NSButton(title: L("Annuler"), target: nil, action: nil)
     private let progress = NSProgressIndicator()
     private let status = NSTextField(labelWithString: "")
     private var buttons: NSStackView!
@@ -20,7 +21,7 @@ final class UpdateWindowController: NSWindowController, NSWindowDelegate {
     init(release: Release, appName: String, current: AppVersion) {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 440),
                               styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
-        window.title = "Mise à jour de \(appName)"
+        window.title = L("Mise à jour de \(appName)")
         window.minSize = NSSize(width: 460, height: 320)
         super.init(window: window)
         window.delegate = self
@@ -30,10 +31,10 @@ final class UpdateWindowController: NSWindowController, NSWindowDelegate {
         icon.widthAnchor.constraint(equalToConstant: 64).isActive = true
         icon.heightAnchor.constraint(equalToConstant: 64).isActive = true
 
-        let title = NSTextField(labelWithString: "Une nouvelle version de \(appName) est disponible.")
+        let title = NSTextField(labelWithString: L("Une nouvelle version de \(appName) est disponible."))
         title.font = .boldSystemFont(ofSize: NSFont.systemFontSize + 1)
         let detail = NSTextField(wrappingLabelWithString:
-            "La version \(release.version) est disponible ; vous avez la version \(current). Voulez-vous l’installer maintenant ?")
+            L("La version \(release.version) est disponible ; vous avez la version \(current). Voulez-vous l’installer maintenant ?"))
         let header = NSStackView(views: [title, detail])
         header.orientation = .vertical
         header.alignment = .leading
@@ -48,7 +49,7 @@ final class UpdateWindowController: NSWindowController, NSWindowDelegate {
         text.textContainerInset = NSSize(width: 8, height: 8)
         text.textStorage?.setAttributedString(Self.render(release.notes))
 
-        let notesTitle = NSTextField(labelWithString: "Notes de version :")
+        let notesTitle = NSTextField(labelWithString: L("Notes de version :"))
         notesTitle.font = .boldSystemFont(ofSize: NSFont.smallSystemFontSize)
 
         progress.isIndeterminate = true
@@ -89,7 +90,7 @@ final class UpdateWindowController: NSWindowController, NSWindowDelegate {
 
     /// Notes de version (Markdown de GitHub) : mise en forme simple, titres en gras.
     static func render(_ markdown: String) -> NSAttributedString {
-        let source = markdown.isEmpty ? "Aucune note de version." : markdown
+        let source = markdown.isEmpty ? L("Aucune note de version.") : markdown
             .replacingOccurrences(of: "\r\n", with: "\n")
             .split(separator: "\n", omittingEmptySubsequences: false)
             .map { line -> String in

@@ -1,0 +1,5 @@
+NSDesktopFolderUsageDescription = "Mesurer l'occupation du Bureau.";
+NSDocumentsFolderUsageDescription = "Mesurer l'occupation du dossier Documents.";
+NSDownloadsFolderUsageDescription = "Mesurer l'occupation du dossier Téléchargements.";
+NSRemovableVolumesUsageDescription = "Mesurer l'occupation des disques amovibles.";
+NSNetworkVolumesUsageDescription = "Mesurer l'occupation des volumes réseau.";

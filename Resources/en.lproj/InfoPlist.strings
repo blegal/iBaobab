@@ -1,0 +1,5 @@
+NSDesktopFolderUsageDescription = "Measure how much space your Desktop uses.";
+NSDocumentsFolderUsageDescription = "Measure how much space your Documents folder uses.";
+NSDownloadsFolderUsageDescription = "Measure how much space your Downloads folder uses.";
+NSRemovableVolumesUsageDescription = "Measure how much space removable disks use.";
+NSNetworkVolumesUsageDescription = "Measure how much space network volumes use.";

@@ -1,4 +1,5 @@
 import AppKit
+import BaobabL10n
 
 /// Vue « Occupation du disque » d'un panneau : choix de la représentation, analyse en arrière-plan,
 /// graphique et, pour certaines représentations, liste synchronisée.
@@ -61,12 +62,12 @@ public final class DiskUsageView: NSView {
         colorPopup.addItems(withTitles: DiskColorMode.allCases.map(\.title))
         colorPopup.target = self
         colorPopup.action = #selector(colorChanged(_:))
-        colorPopup.toolTip = "Couleurs"
+        colorPopup.toolTip = L("Couleurs")
 
-        refreshButton.image = NSImage(systemSymbolName: "arrow.clockwise", accessibilityDescription: "Actualiser")
+        refreshButton.image = NSImage(systemSymbolName: "arrow.clockwise", accessibilityDescription: L("Actualiser"))
         refreshButton.bezelStyle = .accessoryBarAction
         refreshButton.isBordered = false
-        refreshButton.toolTip = "Analyser de nouveau"
+        refreshButton.toolTip = L("Analyser de nouveau")
         refreshButton.target = self
         refreshButton.action = #selector(refresh(_:))
 
@@ -156,7 +157,7 @@ public final class DiskUsageView: NSView {
     public func show(_ url: URL, sharingTreeOf other: DiskUsageView) {
         if tree == nil, let shared = other.tree {
             tree = shared
-            statusLabel.stringValue = "\(shared.count.formatted()) fichiers · \(Format.size(shared.size))"
+            statusLabel.stringValue = L("\(shared.count.formatted()) fichiers · \(Format.size(shared.size))")
         }
         show(url)
     }
@@ -183,12 +184,12 @@ public final class DiskUsageView: NSView {
         spinner.startAnimation(nil)
         let started = Date()
         let name = url.displayName
-        statusLabel.stringValue = "Analyse de « \(name) »…"
+        statusLabel.stringValue = L("Analyse de « \(name) »…")
         progressTimer?.invalidate()
         progressTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self, weak scanner] _ in
             guard let self, let scanner else { return }
             let progress = scanner.progress
-            statusLabel.stringValue = "Analyse de « \(name) »… \(progress.files.formatted()) fichiers · \(Format.size(progress.bytes))"
+            statusLabel.stringValue = L("Analyse de « \(name) »… \(progress.files.formatted()) fichiers · \(Format.size(progress.bytes))")
         }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let result = scanner.scan(url)
@@ -201,7 +202,7 @@ public final class DiskUsageView: NSView {
                 guard let result else { return }
                 tree = result
                 let elapsed = Date().timeIntervalSince(started)
-                statusLabel.stringValue = "\(result.count.formatted()) fichiers · \(Format.size(result.size)) · analysé en \(elapsed.formatted(.number.precision(.fractionLength(1)))) s"
+                statusLabel.stringValue = L("\(result.count.formatted()) fichiers · \(Format.size(result.size)) · analysé en \(elapsed.formatted(.number.precision(.fractionLength(1)))) s")
                 onScanFinished?(url, result.size)
                 show(requestedURL ?? url)
             }
@@ -271,17 +272,17 @@ public final class DiskUsageView: NSView {
         guard let node = node ?? chart.root else { infoLabel.stringValue = ""; return }
         var parts = [node.name + (node.isDirectory ? "/" : ""), Format.size(node.size)]
         if let parent = node.parent, node !== chart.root, parent.size > 0 {
-            parts.append("\(DiskChartView.percent(Double(node.size) / Double(parent.size))) de « \(parent.name) »")
+            parts.append(L("\(DiskChartView.percent(Double(node.size) / Double(parent.size))) de « \(parent.name) »"))
         }
         if node.isDirectory || node.isAggregate {
-            parts.append(node.count <= 1 ? "\(node.count) fichier" : "\(node.count.formatted()) fichiers")
+            parts.append(node.count <= 1 ? L("\(node.count) fichier") : L("\(node.count.formatted()) fichiers"))
             let main = DiskCategory.allCases.map { ($0, node.size(of: $0)) }.filter { $0.1 > 0 }.sorted { $0.1 > $1.1 }.prefix(3)
             if node.size > 0, !main.isEmpty {
                 parts.append(main.map { "\($0.0.title) \(DiskChartView.percent(Double($0.1) / Double(node.size)))" }.joined(separator: ", "))
             }
         }
         if node.modified > 0 {
-            parts.append("modifié le " + Date(timeIntervalSinceReferenceDate: node.modified).formatted(date: .abbreviated, time: .omitted))
+            parts.append(L("modifié le \(Date(timeIntervalSinceReferenceDate: node.modified).formatted(date: .abbreviated, time: .omitted))"))
         }
         infoLabel.stringValue = parts.joined(separator: "  ·  ")
     }
@@ -296,19 +297,19 @@ public final class DiskUsageView: NSView {
             menu.addItem(item)
         }
         if node.isDirectory, node !== chart.root {
-            add("Explorer « \(node.name) »", "arrow.down.right.circle") { [weak self] in self?.onNavigate?(url) }
+            add(L("Explorer « \(node.name) »"), "arrow.down.right.circle") { [weak self] in self?.onNavigate?(url) }
         }
         if node.isDirectory, onOpenInNewTab != nil {
-            add("Ouvrir dans un nouvel onglet", "plus.square.on.square") { [weak self] in self?.onOpenInNewTab?(url) }
+            add(L("Ouvrir dans un nouvel onglet"), "plus.square.on.square") { [weak self] in self?.onOpenInNewTab?(url) }
         }
-        add("Ouvrir", "arrow.up.forward.app") { [weak self] in self?.onOpen?(url) }
+        add(L("Ouvrir"), "arrow.up.forward.app") { [weak self] in self?.onOpen?(url) }
         if onRevealInList != nil {
-            add("Afficher dans la liste", "list.bullet") { [weak self] in self?.onRevealInList?(url) }
+            add(L("Afficher dans la liste"), "list.bullet") { [weak self] in self?.onRevealInList?(url) }
         }
-        add("Afficher dans le Finder", "macwindow") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+        add(L("Afficher dans le Finder"), "macwindow") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
         if node !== chart.root, node.parent != nil {
             menu.addItem(.separator())
-            add("Placer dans la corbeille", "trash") { [weak self] in self?.onTrash?(url) }
+            add(L("Placer dans la corbeille"), "trash") { [weak self] in self?.onTrash?(url) }
         }
         return menu
     }
@@ -374,7 +375,7 @@ final class DiskListView: NSScrollView, NSOutlineViewDataSource, NSOutlineViewDe
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        let columns: [(String, String, CGFloat)] = [("name", "Nom", 220), ("usage", "Utilisation", 96), ("size", "Taille", 82), ("count", "Éléments", 60)]
+        let columns: [(String, String, CGFloat)] = [("name", L("Nom"), 220), ("usage", L("Utilisation"), 96), ("size", L("Taille"), 82), ("count", L("Éléments"), 60)]
         for (identifier, title, width) in columns {
             let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(identifier))
             column.title = title

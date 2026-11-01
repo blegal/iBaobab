@@ -1,4 +1,5 @@
 import Foundation
+import BaobabL10n
 
 /// Installation d'une mise à jour : on prépare la nouvelle application à côté de l'ancienne
 /// (même volume, donc échange instantané), puis un petit script détaché attend la fin du
@@ -71,7 +72,7 @@ public enum UpdateInstaller {
         process.waitUntilExit()
         guard process.terminationStatus == 0 else {
             let detail = String(decoding: message, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
-            throw UpdateError.command("\((tool as NSString).lastPathComponent) a échoué : \(detail)")
+            throw UpdateError.command(L("\((tool as NSString).lastPathComponent) a échoué : \(detail)"))
         }
     }
 }
