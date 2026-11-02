@@ -15,7 +15,7 @@ Analyseur d'occupation des disques pour macOS, natif (AppKit, Swift), sans dépe
 open build/iBaobab.app
 ```
 
-Nécessite macOS 26+ et Xcode (Swift 6). Chaque commit poussé incrémente la version (`Tools/bump-version.sh` : 0.3.0 → 0.3.1 et numéro de build + 1 ; `Tools/bump-version.sh minor` pour passer à 0.4.0).
+Nécessite macOS 15+ et Xcode (Swift 6). Chaque commit poussé incrémente la version (`Tools/bump-version.sh` : 0.3.0 → 0.3.1 et numéro de build + 1 ; `Tools/bump-version.sh minor` pour passer à 0.4.0).
 
 ## Bibliothèques partagées
 

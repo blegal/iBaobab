@@ -74,8 +74,26 @@ enum DiskCategory: Int, CaseIterable {
     }
 }
 
-/// Tailles par catégorie (une par `DiskCategory`), sans allocation.
-typealias CategorySizes = InlineArray<8, Int64>
+/// Tailles par catégorie (une par `DiskCategory`), sans allocation : huit entiers dans un tuple
+/// (`InlineArray` demanderait macOS 26).
+struct CategorySizes: Sendable {
+    private var storage: (Int64, Int64, Int64, Int64, Int64, Int64, Int64, Int64) = (0, 0, 0, 0, 0, 0, 0, 0)
+
+    init(repeating value: Int64) { storage = (value, value, value, value, value, value, value, value) }
+
+    var indices: Range<Int> { 0..<8 }
+
+    subscript(index: Int) -> Int64 {
+        get {
+            precondition(indices.contains(index))
+            return withUnsafeBytes(of: storage) { $0.load(fromByteOffset: index * 8, as: Int64.self) }
+        }
+        set {
+            precondition(indices.contains(index))
+            withUnsafeMutableBytes(of: &storage) { $0.storeBytes(of: newValue, toByteOffset: index * 8, as: Int64.self) }
+        }
+    }
+}
 
 /// Nœud compact de l'arbre d'occupation : un fichier, un dossier ou un groupe de petits fichiers.
 /// 64 octets par nœud : un fichier n'a que son nom, sa taille et un mot de 64 bits (nombre, catégorie, date) ;
