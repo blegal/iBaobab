@@ -419,7 +419,8 @@ final class DiskListView: NSScrollView, NSOutlineViewDataSource, NSOutlineViewDe
             let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(identifier))
             column.title = title
             column.width = width
-            column.minWidth = identifier == "name" ? 100 : 50
+            // Valeurs et titres en entier, en français comme en anglais (« 999,99 Go », « Utilisation », « Éléments »).
+            column.minWidth = ["name": 100, "usage": 84, "size": 74, "count": 66][identifier] ?? 50
             if identifier == "size" || identifier == "count" { column.headerCell.alignment = .right }
             outline.addTableColumn(column)
             if identifier == "name" { outline.outlineTableColumn = column }
