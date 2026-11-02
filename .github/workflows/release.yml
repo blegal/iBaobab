@@ -104,6 +104,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Un tag repoussé (historique réécrit) ne doit pas remplacer une release déjà publiée.
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "La release $GITHUB_REF_NAME existe déjà : rien à publier."
+            exit 0
+          fi
           gh release create "$GITHUB_REF_NAME" "${{ steps.dmg.outputs.path }}" ${{ steps.sig.outputs.path }} \
             --title "iBaobab ${{ steps.version.outputs.version }}" \
             --notes "Application non notarisée : au premier lancement, clic droit sur l'app › Ouvrir, ou \`xattr -dr com.apple.quarantine \"/Applications/iBaobab.app\"\`."
