@@ -1,28 +1,156 @@
+<p align="right"><b>English</b> · <a href="README.fr.md">Français</a></p>
+
 # iBaobab
 
-Analyseur d'occupation des disques pour macOS, natif (AppKit, Swift), sans dépendance externe.
+**See at a glance what fills your disk, and free up space.**
 
-- **Accueil**, en listes groupées façon iOS dans une fenêtre compacte : les disques (barre d'occupation, espace libre sur le total), les dossiers usuels, les analyses récentes (taille et date, menu contextuel pour les retirer) et une zone où déposer un dossier, avec le bouton « Choisir un dossier… » (⌘O). On peut aussi déposer un dossier sur l'icône du Dock.
-- **Onglets natifs** : chaque analyse s'ouvre dans un onglet. ⌘clic sur un dossier (graphique, liste ou fil d'Ariane) ou « Ouvrir dans un nouvel onglet » du menu contextuel ouvre un sous-dossier à côté, sans nouvelle analyse (l'arbre est partagé). ⌘T ou le bouton « + » ouvre un nouvel accueil, ⇧⌘H revient à l'accueil.
-- **Page d'analyse** : sept vues accessibles par les icônes ou par ⌘1 … ⌘7 (carte épurée par défaut), avec les couleurs par type, ancienneté ou branche. On navigue en cliquant dans un dossier, avec le fil d'Ariane, précédent / suivant (⌘[ / ⌘]) et le dossier parent (⌘↑ ou ⌫). Le survol affiche la taille, la part du parent, le nombre de fichiers, les types principaux et la date. Les actions sont « Afficher dans le Finder » (⌥⌘R), « Placer dans la corbeille » (menu contextuel) et « Analyser de nouveau » (⌘R).
-- **Animations**, réglables dans **Présentation › Animations** et **iBaobab › Réglages…** (⌘,) : quatre niveaux comme dans iExplorer (sans animation, légères par défaut, complètes, Whaouh+++) et un interrupteur par effet. Légères : le graphique se construit à la fin d'une analyse, zoom en entrant dans un dossier, jauges des disques qui se remplissent. Complètes : anneaux du soleil qui se déploient, blocs qui glissent d'une vue à l'autre, bloc mis à la corbeille qui s'effrite, dossiers qui apparaissent pendant l'analyse. Whaouh+++ : un baobab pousse à la fin d'une analyse, pluie de feuilles après avoir libéré plus d'1 Go, zone de dépôt qui aspire le dossier glissé. Les effets ne jouent qu'au moment d'une action, à partir d'images du graphique capturées avant et après : au repos, rien ne tourne. Aucun ne joue si « Réduire les animations » est activé dans macOS.
-- **Mises à jour** : indicateur à droite de la barre de titre (flèche verte quand une version est disponible, flèches jaunes pendant le téléchargement) et menu **iBaobab › Rechercher les mises à jour…**.
+iBaobab is a disk usage analyzer for macOS, in the spirit of GNOME's Disk Usage Analyzer (Baobab). It scans a disk or a folder, then lets you browse the result through seven charts, colored by file type, age or branch. Native Swift and AppKit, no external dependency.
 
-## Compiler et lancer
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/flat-dark.png">
+    <img src="docs/images/en/flat.png" alt="Flat treemap of a folder: videos, archives, projects, photos and downloads as nested blocks colored by type">
+  </picture>
+</p>
+
+> The screenshots show a fictional demo folder.
+
+## Features
+
+- **Home page** in grouped lists: your disks (usage bar, free space), common folders, recent scans (size and date) and a drop zone. You can also drop a folder on the Dock icon.
+- **Fast and light scan**: whole directories are read in a few system calls, subfolders in parallel; a scan of `/Applications` (about 570,000 files) holds in about 50 MB of memory.
+- **Seven views**, one click or ⌘1 … ⌘7 away: cushion treemap, flat treemap, sunburst, icicle, histogram, ring and list, list and sunburst.
+- **Three colorings**: by file type (video, images, audio, code, archives, documents), by age, or by branch.
+- **Navigation** by clicking into a folder, with the path bar, back and forward (⌘[ / ⌘]) and the parent folder (⌘↑ or ⌫). Hovering shows the size, the share of the parent, the number of files, the main types and the date.
+- **Native tabs**: each scan opens in a tab; ⌘-click opens a subfolder in a new tab without scanning again.
+- **Actions**: Show in Finder (⌥⌘R), Move to Trash, Scan Again (⌘R).
+- **Animations you control**: four levels (none, light by default, full, Wow+++) and one switch per effect. Effects only play when you do something; nothing runs while the app is idle, and none play when *Reduce motion* is on.
+- **English and French**, following the system language.
+- **Automatic updates**, verified with an Ed25519 signature.
+
+## Screenshots
+
+### Home
+
+Disks, common folders, recent scans, and a drop zone for any folder.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/home-dark.png">
+    <img src="docs/images/en/home.png" width="460" alt="Home page: disks with their usage bars, common folders, recent scans and the drop zone">
+  </picture>
+</p>
+
+### Seven ways to look at a folder
+
+<table>
+  <tr>
+    <td width="50%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/list-sunburst-dark.png">
+        <img src="docs/images/en/list-sunburst.png" alt="List and sunburst">
+      </picture>
+      <p align="center"><b>List and sunburst</b></p>
+    </td>
+    <td width="50%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/sunburst-dark.png">
+        <img src="docs/images/en/sunburst.png" alt="Sunburst">
+      </picture>
+      <p align="center"><b>Sunburst</b></p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/cushion-dark.png">
+        <img src="docs/images/en/cushion.png" alt="Cushion treemap">
+      </picture>
+      <p align="center"><b>Cushion treemap</b></p>
+    </td>
+    <td>
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/icicle-dark.png">
+        <img src="docs/images/en/icicle.png" alt="Icicle">
+      </picture>
+      <p align="center"><b>Icicle</b></p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/donut-dark.png">
+        <img src="docs/images/en/donut.png" alt="Ring and list">
+      </picture>
+      <p align="center"><b>Ring and list</b></p>
+    </td>
+    <td>
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/histogram-dark.png">
+        <img src="docs/images/en/histogram.png" alt="Histogram">
+      </picture>
+      <p align="center"><b>Histogram</b></p>
+    </td>
+  </tr>
+</table>
+
+### Animations
+
+Choose a level, then switch off any effect you don't want: the chart building itself, zooming into folders, sunburst rings unfolding, blocks gliding from one view to the next, a baobab growing at the end of a scan…
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/settings-dark.png">
+    <img src="docs/images/en/settings.png" width="420" alt="Animation settings: level, then one switch per effect grouped by level">
+  </picture>
+</p>
+
+## Installation
+
+1. Download `iBaobab-<version>.dmg` from the [latest release](https://github.com/blegal/iBaobab/releases/latest).
+2. Open it and drag **iBaobab** into **Applications**.
+3. The app is not notarized by Apple. On first launch, open **System Settings › Privacy & Security** and click **Open Anyway**, or run:
+
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/iBaobab.app
+   ```
+
+iBaobab then updates itself: the indicator on the right of the title bar turns green when a new version is available (yellow while it downloads), and **iBaobab › Check for Updates…** checks on demand. Each update is verified with an Ed25519 signature before it is installed.
+
+Requires macOS 15 or later, on Apple Silicon or Intel.
+
+## How it works
+
+- **Scan**: `getattrlistbulk` reads a whole directory in a few system calls (name, type, allocated size, date); subfolders are scanned in parallel. Sizes are allocated sizes, as in the Finder's *Get Info*.
+- **Memory**: each file or folder fits in a compact node (packed counters and dates, interned names).
+- **Drawing**: charts are drawn with Core Graphics, only when needed. Animations work from images of the chart captured before and after a change, and the display link only runs while an effect plays.
+- **Updates**: the app asks the GitHub API for the latest release, downloads the DMG, checks its signature with CryptoKit and the public key embedded in `Info.plist`, then swaps the app bundle and relaunches.
+
+## Building from source
 
 ```bash
-./build.sh          # produit build/iBaobab.app (signée ad hoc)
+./build.sh          # produces build/iBaobab.app (ad hoc signed)
 open build/iBaobab.app
 ```
 
-Nécessite macOS 15+ et Xcode (Swift 6). Chaque commit poussé incrémente la version (`Tools/bump-version.sh` : 0.3.0 → 0.3.1 et numéro de build + 1 ; `Tools/bump-version.sh minor` pour passer à 0.4.0).
+Requires Xcode (Swift 6). `UNIVERSAL=1 VERSION=1.0.0 ./build.sh` builds an Apple Silicon + Intel binary, and `Tools/make-dmg.sh` makes the disk image.
 
-## Bibliothèques partagées
+The `.github/workflows/release.yml` workflow builds the DMG on each push to `main` (run artifact, 30 days) and publishes a GitHub release, with its signature, for each `v*` tag:
 
-Le paquet exporte deux bibliothèques, utilisées aussi par [Enhanced File Manager](https://github.com/blegal/EnhancedFileManager) :
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
 
-- **DiskUsageKit** : scan, modèle `DiskNode`, les sept graphiques et la page d'analyse (`DiskUsageView`), avec leurs animations (`DiskEffects.isEnabled`, fourni par l'app ; aucune par défaut).
-- **UpdateKit** : mise à jour automatique depuis les releases GitHub (`Updater`, `UpdateStatusButton`).
+- `Tools/bump-version.sh`: bumps the version before a commit (`minor` or `major` as an option).
+- `Tools/l10n.py build`: regenerates `Resources/en.lproj/Localizable.strings` from `Tools/l10n/en.json` (the code is written in French).
+- `swift Tools/make-update-key.swift`: makes the update key pair. The private key goes into the `UPDATE_SIGNING_KEY` repository secret, the public key into `Resources/Info.plist`. Optional secrets `MACOS_CERTIFICATE_P12` and `MACOS_CERTIFICATE_PASSWORD` sign with a stable certificate.
+
+## Shared libraries
+
+The package exports two libraries, also used by [iExplorer](https://github.com/blegal/iExplorer) and [GitWatch](https://github.com/blegal/GitWatch):
+
+- **DiskUsageKit**: scanner, `DiskNode` model, the seven charts and the analysis page (`DiskUsageView`), with their animations (`DiskEffects.isEnabled`, provided by the host app; none by default).
+- **UpdateKit**: automatic updates from GitHub releases (`Updater`, `UpdateStatusButton`).
 
 ```swift
 .package(url: "https://github.com/blegal/iBaobab", branch: "main"),
@@ -31,38 +159,6 @@ Le paquet exporte deux bibliothèques, utilisées aussi par [Enhanced File Manag
 .product(name: "UpdateKit", package: "iBaobab"),
 ```
 
-## Image disque (DMG) et GitHub Actions
+## Development
 
-```bash
-UNIVERSAL=1 VERSION=0.3.0 ./build.sh   # binaire Apple Silicon + Intel, version dans Info.plist
-Tools/make-dmg.sh                      # produit build/iBaobab-0.3.0.dmg
-```
-
-Le workflow `.github/workflows/release.yml` construit le DMG à chaque push sur `main` (artefact du run, 30 jours) et le publie dans une release GitHub pour chaque tag `v*` :
-
-```bash
-git tag v0.3.0 && git push origin v0.3.0
-```
-
-**Signature.** Sans compte Apple Developer, l'application est signée ad hoc : elle n'est pas notarisée, donc au premier lancement d'un DMG téléchargé, macOS la bloque. Il faut faire clic droit › Ouvrir (ou Réglages Système › Confidentialité et sécurité › Ouvrir quand même), ou retirer l'attribut de quarantaine :
-
-```bash
-xattr -dr com.apple.quarantine /Applications/iBaobab.app
-```
-
-Facultatif : pour signer avec un certificat stable (auto-signé, ou Developer ID plus tard), ajoutez dans les secrets du dépôt `MACOS_CERTIFICATE_P12` (le .p12 encodé en base64) et `MACOS_CERTIFICATE_PASSWORD`.
-
-## Mise à jour automatique
-
-L'application vérifie les nouvelles versions au lancement et à la demande, sans Sparkle :
-
-1. `URLSession` interroge `https://api.github.com/repos/blegal/iBaobab/releases/latest` et compare le tag à `CFBundleShortVersionString`.
-2. Une fenêtre affiche les notes de version : **Installer**, **Plus tard** ou **Ignorer cette version**. Elle s'ouvre au plus une fois par jour ; sinon seul l'indicateur de la barre de titre passe au vert.
-3. Le DMG `iBaobab-<version>.dmg` est téléchargé, puis sa signature Ed25519 (`….dmg.sig`) est vérifiée avec CryptoKit et la clé publique embarquée (`UpdatePublicKey` dans `Resources/Info.plist`). Une signature absente ou invalide arrête tout.
-4. L'image est montée, la nouvelle application est copiée à côté de l'ancienne, puis un petit script détaché échange les paquets et relance l'application.
-
-**Clé de signature.** `swift Tools/make-update-key.swift` produit la paire de clés : la clé privée va dans le secret `UPDATE_SIGNING_KEY` du dépôt, la clé publique dans `Resources/Info.plist`. Le workflow signe chaque DMG avec `Tools/sign-update.swift` et publie la signature avec la release. Si la clé privée est perdue, les copies déjà installées devront être mises à jour à la main une fois.
-
-## Développement
-
-iBaobab a été développée avec l'aide de [Claude Code](https://claude.com/claude-code), l'assistant de programmation d'Anthropic.
+iBaobab was developed with the help of [Claude Code](https://claude.com/claude-code), Anthropic's coding assistant.
