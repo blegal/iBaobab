@@ -107,6 +107,14 @@ Choisissez un niveau, puis désactivez les effets dont vous ne voulez pas : le g
 
 ## Installation
 
+Avec [Homebrew](https://brew.sh) :
+
+```bash
+brew install --cask blegal/tap/ibaobab
+```
+
+Ou à la main :
+
 1. Téléchargez `iBaobab-<version>.dmg` depuis la [dernière release](https://github.com/blegal/iBaobab/releases/latest).
 2. Ouvrez-le et glissez **iBaobab** dans **Applications**.
 3. L'application n'est pas notarisée par Apple. Au premier lancement, ouvrez **Réglages Système › Confidentialité et sécurité** et cliquez sur **Ouvrir quand même**, ou lancez :

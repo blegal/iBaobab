@@ -107,6 +107,14 @@ Choose a level, then switch off any effect you don't want: the chart building it
 
 ## Installation
 
+With [Homebrew](https://brew.sh):
+
+```bash
+brew install --cask blegal/tap/ibaobab
+```
+
+Or by hand:
+
 1. Download `iBaobab-<version>.dmg` from the [latest release](https://github.com/blegal/iBaobab/releases/latest).
 2. Open it and drag **iBaobab** into **Applications**.
 3. The app is not notarized by Apple. On first launch, open **System Settings › Privacy & Security** and click **Open Anyway**, or run:
