@@ -39,7 +39,7 @@ PLIST="$APP/Contents/Info.plist"
 [[ -n "${BUILD_NUMBER:-}" ]] && /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$PLIST"
 # Sans identité donnée : le certificat personnel créé par Tools/make-local-cert.sh s'il existe
 # (signature stable, macOS garde les autorisations d'un build à l'autre), sinon signature ad hoc.
-LOCAL_CERT="iBaobab Local"
+LOCAL_CERT="Local Code Signing"
 if [[ -z "${SIGN_IDENTITY:-}" ]] && security find-certificate -c "$LOCAL_CERT" >/dev/null 2>&1; then
     if ! codesign --force --timestamp=none --sign "$LOCAL_CERT" "$APP" >/dev/null 2>&1; then
         # Trousseau verrouillé (session SSH…) : signature ad hoc pour ne pas bloquer le build.

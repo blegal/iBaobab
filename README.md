@@ -142,7 +142,7 @@ open build/iBaobab.app
 ```
 
 Each build gets a new ad hoc signature, so macOS asks again for its permissions (Documents, Desktop, disks…).
-Run `Tools/make-local-cert.sh` once: it creates a personal signing certificate in your login keychain, and
+Run `Tools/make-local-cert.sh` once: it creates a personal signing certificate, “Local Code Signing”, shared with my other apps, in your login keychain, and
 `build.sh` then signs every build with it, so permissions are kept from one build to the next.
 
 Requires Xcode (Swift 6). `UNIVERSAL=1 VERSION=1.0.0 ./build.sh` builds an Apple Silicon + Intel binary, and `Tools/make-dmg.sh` makes the disk image.

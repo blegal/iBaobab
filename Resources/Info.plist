@@ -8,8 +8,8 @@
     <key>CFBundleExecutable</key><string>iBaobab</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>1.0.10</string>
-    <key>CFBundleVersion</key><string>15</string>
+    <key>CFBundleShortVersionString</key><string>1.0.11</string>
+    <key>CFBundleVersion</key><string>16</string>
     <key>CFBundleDevelopmentRegion</key><string>en</string>
     <key>CFBundleLocalizations</key><array><string>fr</string><string>en</string></array>
     <key>LSMinimumSystemVersion</key><string>15.0</string>

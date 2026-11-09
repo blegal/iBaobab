@@ -142,7 +142,7 @@ open build/iBaobab.app
 ```
 
 Chaque build reçoit une nouvelle signature ad hoc, et macOS redemande ses autorisations (Documents, Bureau, disques…).
-Lancez une fois `Tools/make-local-cert.sh` : il crée un certificat de signature personnel dans votre trousseau, et
+Lancez une fois `Tools/make-local-cert.sh` : il crée un certificat de signature personnel, « Local Code Signing », commun à mes autres apps, dans votre trousseau, et
 `build.sh` signe ensuite chaque build avec lui, si bien que les autorisations sont gardées d'un build à l'autre.
 
 Nécessite Xcode (Swift 6). `UNIVERSAL=1 VERSION=1.0.0 ./build.sh` produit un binaire Apple Silicon + Intel, et `Tools/make-dmg.sh` l'image disque.
