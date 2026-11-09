@@ -141,6 +141,10 @@ Nécessite macOS 15 ou plus récent, sur Apple Silicon ou Intel.
 open build/iBaobab.app
 ```
 
+Chaque build reçoit une nouvelle signature ad hoc, et macOS redemande ses autorisations (Documents, Bureau, disques…).
+Lancez une fois `Tools/make-local-cert.sh` : il crée un certificat de signature personnel dans votre trousseau, et
+`build.sh` signe ensuite chaque build avec lui, si bien que les autorisations sont gardées d'un build à l'autre.
+
 Nécessite Xcode (Swift 6). `UNIVERSAL=1 VERSION=1.0.0 ./build.sh` produit un binaire Apple Silicon + Intel, et `Tools/make-dmg.sh` l'image disque.
 
 Le workflow `.github/workflows/release.yml` construit le DMG à chaque push sur `main` (artefact du run, 30 jours) et publie une release GitHub, avec sa signature, pour chaque tag `v*` :
